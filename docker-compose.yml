@@ -32,3 +32,14 @@ services:
       - "8084:8084"
       - "8883:8883"
       - "18083:18083" # Dashboard
+  api:
+      build:
+        context: ./api
+        dockerfile: dockerfile
+      container_name: api
+      volumes:
+      - ./api:/app
+      ports:
+        - 3000:3000
+      depends_on:
+        - emqx

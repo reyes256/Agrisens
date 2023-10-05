@@ -1,7 +1,7 @@
 const mqtt = require("mqtt");
 
 const protocol = "mqtt";
-const host = "localhost";
+const host = "emqx";
 const port = "1883";
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
 const connectUrl = `${protocol}://${host}:${port}`;
@@ -42,7 +42,7 @@ function GenerateTime() {
 
 // Conection mongodb
 const { MongoClient } = require("mongodb");
-const uri = "mongodb://root:password@localhost:27017/";
+const uri = "mongodb://root:password@mongo:27017/";
 const clientDB = new MongoClient(uri);
 const db = clientDB.db("mqtt");
 

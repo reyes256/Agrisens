@@ -7,9 +7,9 @@ const char *ssid = "HackatecNM2";
 const char *password = "itesca2024";
 
 // MQTT Broker
-const char *mqtt_broker = "broker.emqx.io";
-const char *topic = "main/topic";
+const char *mqtt_broker = "10.7.84.226";
 const int mqtt_port = 1883;
+const char *topic = "main/topic";
 const String client_id = "esp32-client-12345";
 
 WiFiClient espClient;
@@ -38,7 +38,7 @@ void setup()
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
-    Serial.println("Conectando a Internet..");
+    Serial.println("Conectando a Internet...");
   }
   Serial.println("Conexión a Internet Establecida");
 
@@ -48,7 +48,6 @@ void setup()
 
   while (!client.connected())
   {
-    
     // client_id += String(WiFi.macAddress());
     Serial.printf("\nConectando al broker... ");
     if (client.connect(client_id.c_str()))
@@ -69,16 +68,19 @@ void setup()
 
 void sendTemperature()
 {
-  char str[16];
-  sprintf(str, "%u", random(100));
-  client.publish("esp/temp", str);
+  int randomNum = random(20, 21 + 1);
+  char charArray[10];
+
+  sprintf(charArray, "%d", randomNum);
+  // Serial.print(charArray);
+
+  client.publish("esp/temp", charArray);
 }
 
 void sendHumidity()
 {
-  char str[16];
-  sprintf(str, "%u", random(100));
-  client.publish("esp/hum", str);
+  // char *humedad = "18";
+  client.publish("esp/hum", "18");
 }
 
 void reconnect()

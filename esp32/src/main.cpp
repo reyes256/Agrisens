@@ -66,7 +66,7 @@ void setup()
   client.subscribe(topic);
 }
 
-void sendTemperature()
+void sendWaterTemperature()
 {
   int randomNum = random(20, 21 + 1);
   char charArray[10];
@@ -74,13 +74,35 @@ void sendTemperature()
   sprintf(charArray, "%d", randomNum);
   // Serial.print(charArray);
 
-  client.publish("esp/temp", charArray);
+  client.publish("esp/temp/agua", charArray);
 }
 
-void sendHumidity()
+void sendAirTemperature()
+{
+  int randomNum = random(20, 21 + 1);
+  char charArray[10];
+
+  sprintf(charArray, "%d", randomNum);
+  // Serial.print(charArray);
+
+  client.publish("esp/temp/aire", charArray);
+}
+
+void sendAirHumidity()
 {
   // char *humedad = "18";
-  client.publish("esp/hum", "18");
+  client.publish("esp/humedad/aire", "18");
+}
+
+void sendEarthHumidity()
+{
+  // char *humedad = "18";
+  client.publish("esp/humedad/tierra", "18");
+}
+
+void sendLuminosity(){
+  // char *humedad = "18";
+  client.publish("esp/luminosidad", "57");
 }
 
 void reconnect()
@@ -119,8 +141,11 @@ void loop()
 
   client.loop();
 
-  sendTemperature();
-  sendHumidity();
-
+  sendWaterTemperature();
+  sendAirTemperature();
+  sendAirHumidity();
+  sendEarthHumidity();
+  sendLuminosity();
+  
   delay(2000);
 }

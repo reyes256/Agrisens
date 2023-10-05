@@ -43,3 +43,17 @@ services:
         - 3000:3000
       depends_on:
         - emqx
+  ui:
+      build:
+        context: ./ui
+        dockerfile: dockerfile
+      container_name: ui
+      volumes:
+      - ./ui:/app
+      ports:
+        - 3001:3000
+        - 24678:24678
+      environment:
+        - HOST=0.0.0.0
+      depends_on:
+        - api

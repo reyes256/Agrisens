@@ -1,7 +1,5 @@
-// mongoDB clientDB
-const { MongoClient } = require("mongodb");
-// mqtt
 const mqtt = require("mqtt");
+
 const protocol = "mqtt";
 const host = "localhost";
 const port = "1883";
@@ -14,11 +12,11 @@ const clientMqtt = mqtt.connect(connectUrl, {
   reconnectPeriod: 1000,
 });
 
-const topic = "temp/agua"; // Sub topic name
+const topic = "esp/#";
 
 // conection to mqtt
 clientMqtt.on("connect", () => {
-  console.log("connecting: " + clientId);
+  console.log(`connected with id: [${clientId}]`);
   clientMqtt.subscribe([topic], () => {
     console.log(`Subscribe to topic '${topic}'`);
   });
@@ -31,51 +29,40 @@ clientMqtt.on("reconnect", (error) => {
 clientMqtt.on("message", (topic, payload) => {
   console.log("Received Message:", topic, payload.toString());
   insertarDatos(topic, payload.toString());
-  //switch (topic) {
-  //  case "temp/agua":
-  //    break;
-  //  case "temp/aire":
-  //  case "humedad/aire":
-  //  case "humedad/tierra":
-  //  case "luminosidad":
-  //  case "foco":
-  //}
-
-});
-// message to send
-const MessageSend = "21";
-
-// message publish
-clientMqtt.on("connect", () => {
-  clientMqtt.publish("temp/agua", MessageSend, { qos: 0, retain: false }, (error) => {
-    if (error) {
-      console.error("publish failed ", error);
-    }
-  });
 });
 
 function GenerateTime() {
-  const fecha = new Date();
+  const fullDate = new Date();
 
-  fechaFormatiada = `${fecha.getFullYear()}-${fecha.getMonth() + 1}-${
-    fecha.getDay() + 1
-  }T${fecha.getHours()}:${fecha.getMinutes()}:${fecha.getSeconds()}`;
+  const datePart = `${fullDate.getFullYear()}-${fullDate.getMonth() + 1}-${fullDate.getDay() + 1}`
+  const timePart = `${fullDate.getHours()}:${fullDate.getMinutes()}:${fullDate.getSeconds()}`
 
-  return fechaFormatiada;
+  return `${datePart}T${timePart}`;
 }
 
 // Conection mongodb
+const { MongoClient } = require("mongodb");
 const uri = "mongodb://root:password@localhost:27017/";
 const clientDB = new MongoClient(uri);
+const db = clientDB.db("mqtt");
+
+async function connectToMongo() {
+  try {
+    await clientDB.connect();
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+  }
+}
+
+connectToMongo();
 
 async function traerDatos(colleccion) {
   try {
-    await clientDB.connect();
-    const db = clientDB.db("mqtt");
     const result = await db.collection(colleccion).find({}).toArray();
-    await clientDB.close();
     return result;
-  } finally {
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -85,12 +72,10 @@ async function insertarDatos(topic, payload) {
     time : GenerateTime(),
   };
   try {
-    await clientDB.connect();
-    const db = clientDB.db("mqtt");
     const result = await db.collection(topic).insertOne(document);
     console.log(result);
-  } finally {
-    await clientDB.close();
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -105,31 +90,31 @@ app.use(express.json());
 
 // Rutas para los endpoints
 app.get("/temp/agua", (req, res) => {
-  traerDatos("temp/agua").then((document) => {
+  traerDatos("esp/temp/agua").then((document) => {
     res.send(document);
   });
 });
 
 app.get("/temp/aire", (req, res) => {
-  traerDatos("temp/aire").then((document) => {
+  traerDatos("esp/temp/aire").then((document) => {
     res.send(document);
   });
 });
 
 app.get("/humedad/aire", (req, res) => {
-  traerDatos("humedad/aire").then((document) => {
+  traerDatos("esp/humedad/aire").then((document) => {
     res.send(document);
   });
 });
 
 app.get("/humedad/tierra", (req, res) => {
-  traerDatos("humedad/tierra").then((document) => {
+  traerDatos("esp/humedad/tierra").then((document) => {
     res.send(document);
   });
 });
 
 app.get("/luminosidad", (req, res) => {
-  traerDatos("luminosidad").then((document) => {
+  traerDatos("esp/luminosidad").then((document) => {
     res.send(document);
   });
 });

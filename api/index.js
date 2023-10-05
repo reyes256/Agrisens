@@ -14,11 +14,11 @@ const clientMqtt = mqtt.connect(connectUrl, {
   reconnectPeriod: 1000,
 });
 
-const topic = "testtopic/test"; // Sub topic name
+const topic = "temp/agua"; // Sub topic name
 
 // conection to mqtt
 clientMqtt.on("connect", () => {
-  console.log("connecting" + clientId);
+  console.log("connecting: " + clientId);
   clientMqtt.subscribe([topic], () => {
     console.log(`Subscribe to topic '${topic}'`);
   });
@@ -30,13 +30,24 @@ clientMqtt.on("reconnect", (error) => {
 // message received
 clientMqtt.on("message", (topic, payload) => {
   console.log("Received Message:", topic, payload.toString());
+  insertarDatos(topic, payload.toString());
+  //switch (topic) {
+  //  case "temp/agua":
+  //    break;
+  //  case "temp/aire":
+  //  case "humedad/aire":
+  //  case "humedad/tierra":
+  //  case "luminosidad":
+  //  case "foco":
+  //}
+
 });
 // message to send
-const MessageSend = "nodejs mqtt test 51165";
+const MessageSend = "21";
 
 // message publish
 clientMqtt.on("connect", () => {
-  clientMqtt.publish(topic, MessageSend, { qos: 0, retain: false }, (error) => {
+  clientMqtt.publish("temp/agua", MessageSend, { qos: 0, retain: false }, (error) => {
     if (error) {
       console.error("publish failed ", error);
     }
@@ -56,38 +67,32 @@ function GenerateTime() {
 // Conection mongodb
 const uri = "mongodb://root:password@localhost:27017/";
 const clientDB = new MongoClient(uri);
-async function run() {
+
+async function traerDatos(colleccion) {
   try {
     await clientDB.connect();
-    // database and collection code goes here
     const db = clientDB.db("mqtt");
-    async function Collections() {
-      conection();
-      const coll = db.collection("Temperatura ambiente");
-      const docs = [
-        {
-          temperaute: 75,
-          Time: GenerateTime(),
-        },
-      ];
-      // insert code goes here
-      const result = await coll.insertMany(docs);
-      //display the results of your operation
-      return(result.insertedIds);
-    }
-    async function ViewColl() {
-      // find code goes here
-      const cursor = coll.find();
-      // iterate code goes here
-      await cursor.forEach(console.log);
-    }
-  } finally {
-    // Ensures that the clientDB will close when you finish/error
+    const result = await db.collection(colleccion).find({}).toArray();
     await clientDB.close();
+    return result;
+  } finally {
   }
 }
 
-run().catch(console.dir);
+async function insertarDatos(topic, payload) {
+  let document = {
+    value : payload.toString(),
+    time : GenerateTime(),
+  };
+  try {
+    await clientDB.connect();
+    const db = clientDB.db("mqtt");
+    const result = await db.collection(topic).insertOne(document);
+    console.log(result);
+  } finally {
+    await clientDB.close();
+  }
+}
 
 // ---------------------------------------------------------------- Endpoints ----------------------------------------------------------------
 
@@ -100,24 +105,33 @@ app.use(express.json());
 
 // Rutas para los endpoints
 app.get("/temp/agua", (req, res) => {
-  res.send("API gasbrother");
+  traerDatos("temp/agua").then((document) => {
+    res.send(document);
+  });
 });
 
 app.get("/temp/aire", (req, res) => {
-  res.send("Obtener temperatura del aire");
+  traerDatos("temp/aire").then((document) => {
+    res.send(document);
+  });
 });
 
 app.get("/humedad/aire", (req, res) => {
-  res.send("Obtener humedad del aire");
+  traerDatos("humedad/aire").then((document) => {
+    res.send(document);
+  });
 });
 
 app.get("/humedad/tierra", (req, res) => {
-  res.send("Obtener humedad del suelo");
+  traerDatos("humedad/tierra").then((document) => {
+    res.send(document);
+  });
 });
 
-app.get("/luminocidad", (req, res) => {
-  console.log(Collections());
-  res.send("Obtener luminosidad");
+app.get("/luminosidad", (req, res) => {
+  traerDatos("luminosidad").then((document) => {
+    res.send(document);
+  });
 });
 
 // Post request
